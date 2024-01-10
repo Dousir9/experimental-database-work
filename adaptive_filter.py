@@ -1,3 +1,5 @@
+# Adaptive Filter
+
 import random
 
 MIN_SELECTIVITY = 0.1
@@ -121,21 +123,29 @@ class MinCostPermutation:
                 self.visit[i] = False
 
 if __name__ == "__main__":
+    original = [0] * (MAX_FILTER_EXPR_NUM + 1)
+    adaptive = [0] * (MAX_FILTER_EXPR_NUM + 1)
     run_num = 100
-    ret = [0] * (MAX_FILTER_EXPR_NUM + 1)
-    for _ in range(run_num):
+    for i in range(run_num):
+        print("[{}/{}]".format(i + 1, run_num))
         for num_filter_exprs in range(MIN_FILTER_EXPR_NUM, MAX_FILTER_EXPR_NUM + 1):
             filter_exprs = [Filter() for _ in range(num_filter_exprs)]
             filter_executor = FilterExecutor(filter_exprs=filter_exprs)
-            cost = 0
+            original_cost = 0
+            adaptive_cost = 0
             for i in range(NUM_BLOCKS):
                 cost = filter_executor.filter(BLOCK_SIZE)
+                if i == 0:
+                    original_cost = cost
+                elif i == NUM_BLOCKS - 1:
+                    adaptive_cost = cost
             min_cost_permutation = MinCostPermutation(filter_exprs=filter_exprs)
             min_cost_permutation.permutation_min_cost(0, len(filter_exprs), filter_exprs, BLOCK_SIZE)
-            print("num_filter_exprs: ", num_filter_exprs)
-            print("adaptive cost: ", cost)
-            print("min cost: ", min_cost_permutation.min_cost)
-            ret[num_filter_exprs] += cost / min_cost_permutation.min_cost
+            print("num_filter_exprs: {}, original cost: {}, adaptive cost: {}, min cost: {}".format(num_filter_exprs, original_cost, adaptive_cost, min_cost_permutation.min_cost))
+            original[num_filter_exprs] += original_cost / min_cost_permutation.min_cost
+            adaptive[num_filter_exprs] += cost / min_cost_permutation.min_cost
     for i in range(MIN_FILTER_EXPR_NUM, MAX_FILTER_EXPR_NUM + 1):
-        ret[i] = round(ret[i] / run_num, 2)
-    print(ret)
+        original[i] = round(original[i] / run_num, 2)
+        adaptive[i] = round(adaptive[i] / run_num, 2)
+    print("original:", original)
+    print("adaptive:", adaptive)
